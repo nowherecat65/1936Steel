@@ -1,0 +1,274 @@
+e = campaignTrail_temp;
+
+musicMode = () => {
+    // Initialise custom music
+  
+    $("#music_player")[0].children[0].style.display = "none"
+    $("#music_player")[0].children[1].style.display = "none"
+  
+    document.getElementById("modLoadReveal").style.display = "none"
+    document.getElementById("modloaddiv").style.display = "none"
+  
+    musicBox = document.getElementById("music_player")
+    musicBox.style.display = ""
+  
+    var trackSel;
+    e = campaignTrail_temp
+    e.selectedSoundtrack = 0
+  
+    toTime = (seconds) => {
+        var date = new Date(null);
+        date.setSeconds(seconds);
+        return date.toISOString().substr(11, 8);
+    }
+  
+    generateTime = () => {
+        // Get the audio element
+        var audio = document.getElementById("campaigntrailmusic");
+  
+        timeTracker = document.createElement("div");
+        timeTracker.style = `
+  text-align:left;
+  border-style:solid;
+  border-width:3px;
+  height:150px;
+  width:200px;
+  background-color:#999999;
+  float:right;
+  padding: 10px;
+  `
+        $("#trackSelParent")[0].prepend(timeTracker);
+        $("#trackSelParent")[0].prepend(document.createElement("br"));
+  
+        // Create a new element to display the current position of the audio
+        var positionDisplay = document.createElement("gg");
+        positionDisplay.id = "position-display";
+  
+        // Create a new slider element to change the time
+        var timeSlider = document.createElement("input");
+        timeSlider.type = "range";
+        timeSlider.min = 0;
+        timeSlider.max = 1;
+        timeSlider.step = 0.001;
+        timeSlider.value = 0;
+        timeSlider.style.width = "200px";
+        timeSlider.id = "time-slider";
+  
+        var pausePlay = document.createElement("button");
+        pausePlay.id = "position-display";
+        pausePlay.innerHTML = "<b>Pause</b>"
+        pausePlay.style.width = "100%";
+  
+  
+        pausePlay.addEventListener("click", event => {
+            event.preventDefault();
+            updatePositionDisplay();
+            let audio = document.getElementById("campaigntrailmusic");
+            if (audio.paused) {
+                audio.play();
+                event.target.innerHTML = "<b>Pause</b>";
+                return;
+            }
+            audio.pause();
+            event.target.innerHTML = "<b>Play</b>";
+            return;
+        })
+  
+        var volumeLabel = document.createElement("gg");
+        volumeLabel.id = "volume-label";
+        volumeLabel.innerHTML = "<br><b>Volume: </b>"
+  
+        var volumeSlider = document.createElement("input");
+        volumeSlider.type = "range";
+        volumeSlider.min = 0;
+        volumeSlider.max = 1;
+        volumeSlider.step = 0.001;
+        volumeSlider.value = 0;
+        volumeSlider.style.width = "200px";
+        volumeSlider.id = "volume-slider";
+  
+        volumeSlider.value = audio.volume;
+  
+        timeTracker.appendChild(pausePlay);
+        timeTracker.appendChild(document.createElement("br"));
+        timeTracker.appendChild(document.createElement("br"));
+        timeTracker.appendChild(positionDisplay);
+        timeTracker.appendChild(timeSlider);
+        timeTracker.appendChild(volumeLabel);
+        timeTracker.appendChild(volumeSlider);
+  
+        updatePositionDisplay();
+  
+        //for (let i = 0; i < 10; i++)
+        //timeTracker.append(document.createElement("br"));
+  
+  
+        // Function to update the position display
+        function updatePositionDisplay() {
+            positionDisplay.innerHTML = "<b>Time:</b> " + toTime(audio.currentTime) + "<br>";
+            timeSlider.value = audio.duration ? audio.currentTime / audio.duration : 0;
+        }
+  
+        // Function to change the time of the audio
+        function changeTime() {
+            positionDisplay.innerHTML = "<b>Time:</b> " + toTime(audio.currentTime) + "<br>";
+            audio.currentTime = timeSlider.value * audio.duration;
+        }
+  
+        updateVolume = event => {
+            audio.volume = event.target.value;
+        }
+  
+        // Update the position display and slider every second
+        setInterval(updatePositionDisplay, 1000);
+  
+        // Listen for changes to the time slider and change the time of the audio
+        timeSlider.addEventListener("input", changeTime);
+        volumeSlider.addEventListener("input", updateVolume)
+    }
+  
+    function newMusicPlayer() {
+        trackSel = document.createElement("div");
+        trackSel.id = "trackSelParent"
+        let z = `<br><br><br><br><br><br><br><br><br><br><div id='trackSel' style="text-align:left;border-style:solid;border-width:3px;overflow-y: scroll;overflow-x: hidden;height:200px; width:400px;background-color:#999999;float:right;">`
+        z += `<b><select id='selectSoundtrack'><option value='` + soundtracks[e.selectedSoundtrack].name + `'>` + soundtracks[e.selectedSoundtrack].name + "</option>"
+        for (i in soundtracks) {
+            if (soundtracks[e.selectedSoundtrack] != soundtracks[i]) {
+                z += `<option value='` + soundtracks[i].name + `'>` + soundtracks[i].name + `</option>`
+            }
+        }
+        z += `</select></b><br><br>`
+            // <label><input type="radio" name="option" value="option1">Option 1</label><br>
+        for (i in soundtracks[e.selectedSoundtrack].tracklist) {
+            let a = soundtracks[e.selectedSoundtrack].tracklist[i]
+            let b = `<label><input class="trackSelector" type="radio" name="trackSelector" value="` + i + `">` + a.name + `</label><br>`
+            z += b
+        }
+        z += "</div><br><br>"
+        trackSel.innerHTML = z
+  
+        // select correct song
+  
+        musicBox.appendChild(trackSel);
+        Array.from(document.getElementById("trackSel").children).filter(f => {
+            return f.tagName == "LABEL"
+        }).map(f => f.children[0])[0].checked = true
+  
+        // set soundtrack changer
+  
+        soundtrackSelector = document.getElementById("selectSoundtrack")
+        soundtrackSelector.onchange = function() {
+            for (i in soundtracks) {
+                if (soundtracks[i].name == soundtrackSelector.value) {
+                    e.selectedSoundtrack = i
+                    break
+                }
+            }
+            document.getElementById("trackSelParent").remove()
+            newMusicPlayer()
+        }
+  
+        var matches = document.querySelectorAll('.trackSelector');
+  
+        for (match in matches) {
+            matches[match].onchange = function() {
+                audio = $("#campaigntrailmusic")[0];
+                audio.src = soundtracks[e.selectedSoundtrack].tracklist[this.value].url
+                audio.currentTime = 0
+            }
+        }
+  
+        musicBox.children[2].loop = false
+        musicBox.children[2].src = soundtracks[e.selectedSoundtrack].tracklist[0].url
+  
+        musicBox.children[2].onended = function() {
+            console.log("next track")
+            let selected = Number(document.querySelector('input[name="trackSelector"]:checked').value);
+            let newSel = clamp(selected + 1, soundtracks[e.selectedSoundtrack].tracklist.length - 1, 0)
+            let buttons = Array.from(document.getElementById("trackSel").children).filter(f => {
+                    return f.tagName == "LABEL"
+                }).map(f => f.children[0])
+                //let selectedIndex = buttons.map(f=>f.children[0]).map(f=>f.checked)
+            buttons[newSel].click()
+        }
+  
+        for (w = 0; w < 7; w++) {
+            document.getElementById("trackSelParent").appendChild(document.createElement("br"))
+        }
+  
+        generateTime();
+    }
+  
+    clamp = function(a, max, min, overflow = true) {
+        if (overflow) {
+            return a > max ? min : a < min ? max : a;
+        }
+        return a > max ? max : a < min ? min : a;
+    }
+  
+  
+    // Track list
+  
+    var soundtracks = {
+        0: {
+            name: "1936Steel Official Soundtrack",
+            tracklist: [
+              {
+                "name": "With Plenty of Money and You - Henry Busse",
+                "url": "https://cdn.discordapp.com/attachments/948816709844860950/1145615620176625724/hb-pm.mp3"
+              },
+              {
+                "name": "Keepin A Knockin’ - Louis Jordan",
+                "url": "https://cdn.discordapp.com/attachments/948816709844860950/1145612205392416838/keep-a-knockin.mp3"
+              },
+              {
+                "name": "I’m In The Mood For Love - Louis Armstrong",
+                "url": "https://cdn.discordapp.com/attachments/948816709844860950/1145613452803579914/iitmfl.mp3"
+              },
+              {
+                "name": "The Flat Foot Floogie - Slim and Slam",
+                "url": "https://cdn.discordapp.com/attachments/948816709844860950/1145614771731845141/fff-ss.mp3"
+              }
+          ]
+        }
+    }
+
+  
+    // Set up new music player
+  
+    newMusicPlayer()
+  
+
+}
+
+  $("#game_start").click((event) => {
+    event.preventDefault();
+    $("#election_id_button").click((event) => {
+        musicMode()
+
+        setInterval(changeFontColour, 200)
+  
+    })
+  })
+
+            nct_stuff.themes[nct_stuff.selectedTheme].coloring_title = "#0a0114";
+
+            nct_stuff.themes[nct_stuff.selectedTheme].coloring_window = "#575D74";
+
+$(".container")[0].style.backgroundImage = "url(https://i.imgur.com/PStawzi.png)" 
+
+            document.getElementsByClassName("game_header")[0].style.backgroundColor = nct_stuff.themes[nct_stuff.selectedTheme].coloring_title;
+
+            $("#game_window")[0].style.backgroundColor = nct_stuff.themes[nct_stuff.selectedTheme].coloring_window;
+
+            document.getElementById("header").src = "https://i.imgur.com/4FO8fTs.png";
+
+            document.body.background = "https://i.imgur.com/V4ZujHD.png";
+
+
+campaignTrail_temp.candidate_json = JSON.parse("[{\"model\": \"campaign_trail.candidate\", \"pk\": 201, \"fields\": {\"first_name\": \"John Nance\", \"last_name\": \"Garner\", \"election\": 20, \"party\": \"Democrat\", \"state\": \"Texas\", \"priority\": 1, \"description\": \"<div style='overflow-y:scroll;height:190px;'><p>John Nance Garner was a longtime Senator from Texas and a key leader within his party. However, his political career took a dramatic turn when he became the incumbent President of the United States, following the truly tragic assassination of President-elect Franklin D. Roosevelt in Miami, Florida, just 17 days before the scheduled inauguration.</p><p>Upon taking office, and even before Garner was perceived as a fairly conservative Democrat, at least in comparison to FDR, but during the ongoing political, and economic crisis he has pushed for, and has enacted major elements of the New Deal, and has signed the Works Progress Administration, and Social Security, amongst other pieces of legislation, and reforms.</p><p>The President still has a strained relationship with organized labor and the more progressive wing of his party, who are pushing for greater action. Despite this tension, he remains broadly popular with his base. As his re-election campaign approaches, the key question remains: will President Garner continue to align with New Deal policies, or shift towards a more conservative agenda? Only time will tell which path he chooses…</p>\", \"color_hex\": \"#0f45a3\", \"secondary_color_hex\": \"#527dc7\", \"is_active\": 1, \"image_url\": \"https://i.imgur.com/3aJvHue.png\", \"electoral_victory_message\": \"<h3>Congratulations, Mr President! You have won the 1936 election.</h3><p>This isn’t too big of a shock, but it was always very possible for things to go wrong along the way. Landon has called to concede, and it seems Democrats will retain the large majorities they enjoy in Congress. You will now continue to pass New Deal legislation.</p><p>Hopefully, the economy can fully recover during your second term. If you can recover the economy, you can set the Democratic Party up for success for many years to come. Or perhaps, do something really crazy and unprecedented, like run for a third term. Only time will tell…….</p>\", \"electoral_loss_message\": \"<h3>Sorry! You have lost the 1936 election.</h3><p>It’s a major shock to your supporters and the nation, but it seems Landon has pulled off quite the incredible upset. The Democratic Party is absolutely furious that you lost to the likes of Alf Landon, especially as a very popular President. Many in the party worry that another economic crisis will occur due to the new Republican President-elect. Rumor is that your running mate, John Garner, is looking to run in 1940, and it will be easier for him to make his case for the nomination, given your loss. In some good news, it appears Democrats will keep control of Congress. Perhaps you may try to run for Senate, although it’s more than likely you shall retire back to New York.</p>\", \"no_electoral_majority_message\": \"<h3>Wow! No candidate holds a majority of electoral votes!</h3><p>This is quite interesting. It seems no candidate has achieved a majority in the Electoral College. This was quite unlikely, but you’re still in shock by the whole situation. This either happened because of southern states bolting towards segregationist candidates, or because of William Lemke winning the Dakotas. With some negotiation, you’ll be able to secure a second term, with some conditions from southern delegates. As the southern delegates are more conservative, your Presidency may take a bit of a turn to the right. However, you’re still immensely popular, and who knows? Maybe you can run in 1940, and perhaps win without the South?</p>\", \"description_as_running_mate\": \"'\", \"candidate_score\": 1.0}}, {\"model\": \"campaign_trail.candidate\", \"pk\": 200, \"fields\": {\"first_name\": \"Frank\", \"last_name\": \"Knox\", \"election\": 20, \"party\": \"Republican\", \"state\": \"Illinois\", \"priority\": 2, \"description\": \"<div style='overflow-y:scroll;height:190px;'><p>William Frank Knox entered the 1936 Republican Convention and primaries as a largely unknown figure beyond political and media circles. A newspaper publisher and a veteran of the Spanish-American War and World War I, Knox made a name for himself as the owner of the Chicago Daily News, advocating for moderate, if not progressive Republican principles, including military preparedness and some government intervention.</p><p>As the convention progressed, the ‘Stop-Landon’ movement gained traction among Republicans seeking an alternative to the conservative, Alf Landon. Knox emerged as their candidate, recognized as a fresh face with moderate credentials while also tapping into the progressive roots of the GOP and the legacy of Theodore Roosevelt. His sharp critiques of President Garner’s economic policies resonated with both right-leaning and left-leaning Republicans who felt the administration had failed to effectively tackle the challenges of the Depression.</p><p> Though now regarded as an underdog, Mr. Knox and his supporters believe his blend of business acumen and everyman-style leadership will win over enough voters to pull through, and win the White House.</p>\", \"color_hex\": \"#bd151a\", \"secondary_color_hex\": \"#eb7f80\", \"is_active\": 1, \"image_url\": \"https://i.imgur.com/Gz0TbjN.jpeg\", \"electoral_victory_message\": \"<h3>Oh…. Oh Dear God, Alfred! You have won the 1936 election in an incredible upset!</h3><p>All the way back in July, when you were given the nomination, victory seemed all but impossible. You were a little known Governor going up against a very popular incumbent who was recovering the economy. Pollsters had you winning only Vermont, Maine and maybe New Hampshire. Whatever the hell you did to close the gap, it has clearly worked, and you’ve left a nation speechless. Your supporters are ecstatic, and have taken to the streets to celebrate. Franklin D. Roosevelt calls to concede, and the Democratic Party is baffled that they somehow lost the White House to some newcomer Governor from Kansas.</p><p>On the governing front, it seems that Democrats still have heavy control of both chambers, so you’ll be working with a divided government for at least the next two years, and likely more to come. Regardless, sit back and relax, knowing that you’ve pulled off the greatest upset in American History! Congratulations, President-Elect Landon, and best of luck, because you’re gonna sure as hell need it!</p>\", \"electoral_loss_message\": \"<h3>Sorry! You have lost the 1932 election.</h3><p>Considering how unpopular the Republican Party is nationwide, this isn’t a huge surprise. Still, some Republicans felt that you could’ve closed the gap, but it appears you were no match for Roosevelt.</p><p>Roosevelt will continue to pass the New Deal programs, with national support. This is probably the end of your political career, depending on how big the margin between you and Roosevelt was. If the race was close, perhaps you could still influence the Republican Party. You could also always go back to run for Governor of Kansas.</p>\", \"no_electoral_majority_message\": \"<h3>Wow! No candidate holds a majority of electoral votes!</h3><p>I assume you messed around with the code since there's an odd number of electors and you can’t split the Southern Electors in a Alf Landon playthrough.</p><p>Anyway, this is quite interesting. It seems no candidate has achieved a majority in the Electoral College. This was rather unlikely, but it’s still disappointing. Unfortunately, it seems Congress will instead choose to give Roosevelt a second term. This is disappointing, but it seems you may have a shot at winning in 1940 if you can keep your influence in the Party Machinery.</p>\", \"description_as_running_mate\": \"'\", \"candidate_score\": 1.0}}, {\"model\": \"campaign_trail.candidate\", \"pk\": 202, \"fields\": {\"first_name\": \"William\", \"last_name\": \"Lemke\", \"election\": 20, \"party\": \"Union\", \"state\": \"North Dakota\", \"priority\": 3, \"description\": \"<p>William Lemke is a House Rep from North Dakota. A hefty amount of space barring is his only chance at the presidency.</p>\", \"color_hex\": \"#00C100\", \"secondary_color_hex\": \"#A1FFA1\", \"is_active\": 0, \"image_url\": \"https://i.imgur.com/CxqO0g5.png\", \"electoral_loss_message\": \"'\", \"no_electoral_majority_message\": \"'\", \"description_as_running_mate\": \"'\", \"candidate_score\": 1.0}}, {\"model\": \"campaign_trail.candidate\", \"pk\": 203, \"fields\": {\"first_name\": \"Other\", \"last_name\": \"Candidates\", \"election\": 20, \"party\": \"Independent\", \"state\": \"Illinois\", \"priority\": 4, \"description\": \"<p>Fortnite</p>\", \"color_hex\": \"#FFFF00\", \"secondary_color_hex\": \"#FFFFC0\", \"is_active\": 0, \"image_url\": \"https://i1.sndcdn.com/artworks-000380106537-v9dafe-t500x500.jpg\", \"electoral_victory_message\": \"'\", \"electoral_loss_message\": \"'\", \"no_electoral_majority_message\": \"'\", \"description_as_running_mate\": \"'\", \"candidate_score\": 1.0}}, {\"model\": \"campaign_trail.candidate\", \"pk\": 204, \"fields\": {\"first_name\": \"Arthur\", \"last_name\": \"Vandenberg\", \"election\": 20, \"party\": \"Republican\", \"state\": \"Delaware\", \"priority\": 5, \"description\": \"'\", \"color_hex\": \"#FF0000\", \"secondary_color_hex\": \"#FFA0A0\", \"is_active\": 0, \"image_url\": \"https://i.imgur.com/Jx36gPb.png\", \"electoral_victory_message\": \"'\", \"electoral_loss_message\": \"'\", \"no_electoral_majority_message\": \"'\", \"description_as_running_mate\": \"<p>Arthur H. Vandenberg Sr., the senior senator from Michigan, was nominated as your running mate on the first ballot. You and Vandenberg struck a deal early in the convention to support each other, and to join the ‘Stop Landon’ to defeat the conservative, Kansas Senator, Alf Landon for the nomination. While, unlike you, Senator Vandenberg aligns with the non-interventionist wing of the G.O.P., he isn't an ideologue and is open to listening on the issue.</p><p> You and Senator Vandenberg both seriously got involved in politics during the 1912 presidential election, where you both supported T.R. and the Bull Moose Party. Although it's been over two decades since that pivotal battle, it has shaped your political ideologies and rhetoric. Choosing Vandenberg would double down on this old legacy, and more practically, would certainly be viewed as a strategic move to win over the Midwest, and the Great Plains.</p>\", \"candidate_score\": 0.0}}, {\"model\": \"campaign_trail.candidate\", \"pk\": 205, \"fields\": {\"first_name\": \"William E.\", \"last_name\": \"Borah\", \"election\": 20, \"party\": \"Republican\", \"state\": \"Idaho\", \"priority\": 6, \"description\": \"'\", \"color_hex\": \"#FF0000\", \"secondary_color_hex\": \"#FFA0A0\", \"is_active\": 0, \"image_url\": \"https://i.imgur.com/IgQIdFv.png\", \"electoral_victory_message\": \"'\", \"electoral_loss_message\": \"'\", \"no_electoral_majority_message\": \"'\", \"description_as_running_mate\": \"<p>Senator William Edgar Borah of Idaho is one of the nation's best-known Republicans and a rival at this year's convention. He played a crucial role in the 'Stop-Landon' alliance that secured your nomination. A progressive free from ties to Hoover and past Republican failures, Borah carries his own baggage, including opposition to anti-lynching legislation, a maverick stance on economic issues, and, most notably, an ardent isolationism.</p><p>Borah is expected to bolster the ticket in Idaho and the West and would likely secure the VP nomination quickly. However, at 71 and having served since 1907, he is often viewed as somewhat obsolete, more bark than bite, and may not generate much enthusiasm for the ticket, potentially alienating your conservative base.</p>\", \"candidate_score\": 0.0}}, {\"model\": \"campaign_trail.candidate\", \"pk\": 208, \"fields\": {\"first_name\": \"Jeb\", \"last_name\": \"Bush\", \"election\": 20, \"party\": \"Republican\", \"state\": \"Florida\", \"priority\": 7, \"description\": \"'\", \"color_hex\": \"#FF0000\", \"secondary_color_hex\": \"#FFA0A0\", \"is_active\": 0, \"image_url\": \"/static/images/sarah-palin-2016.jpg\", \"electoral_victory_message\": \"'\", \"electoral_loss_message\": \"'\", \"no_electoral_majority_message\": \"'\", \"description_as_running_mate\": \"<p>Sarah Palin is the former Governor of Alaska and ill-fated running mate on John McCain's 2008 ticket. Many people believe that she alienated some moderate support and may have cost McCain the election. On the other hand, she endorsed your candidacy relatively early and is still something of a folk hero on the right. In any case, she would certainly help you grab an even greater share of the headlines this fall.</p>\", \"candidate_score\": 0.0}}, {\"model\": \"campaign_trail.candidate\", \"pk\": 206, \"fields\": {\"first_name\": \"Ben\", \"last_name\": \"Carson\", \"election\": 20, \"party\": \"Republican\", \"state\": \"Ohio\", \"priority\": 7, \"description\": \"'\", \"color_hex\": \"#FF0000\", \"secondary_color_hex\": \"#FFA0A0\", \"is_active\": 0, \"image_url\": \"/static/images/ben-carson-2016.jpg\", \"electoral_victory_message\": \"'\", \"electoral_loss_message\": \"'\", \"no_electoral_majority_message\": \"'\", \"description_as_running_mate\": \"<p>Ben Carson was a candidate for President in 2016, with a long history within the evangelical community. He has never served in political office, a fact which may be an asset in this election. Carson was one of the Trump's first opponents to publicly endorse him, and he consistently polled relatively high in the black community during the primary season. However, he has also made a number of bizarre statements and may be vulnerable to a sustained attack campaign.</p>\", \"candidate_score\": 0.0}}, {\"model\": \"campaign_trail.candidate\", \"pk\": 207, \"fields\": {\"first_name\": \"Lester J.\", \"last_name\": \"Dickinson\", \"election\": 20, \"party\": \"Republican\", \"state\": \"Iowa\", \"priority\": 8, \"description\": \"'\", \"color_hex\": \"#FF0000\", \"secondary_color_hex\": \"#FFA0A0\", \"is_active\": 0, \"image_url\": \"https://i.imgur.com/22mW21Y.png\", \"electoral_victory_message\": \"'\", \"electoral_loss_message\": \"'\", \"no_electoral_majority_message\": \"'\", \"description_as_running_mate\": \"<p>House. A staunch conservative, Dickinson opposed the New Deal and is known for his anti-elitist, almost populist tone, framing liberal policies as concocted by coastal brain trusts.</p><p>Choosing Senator Dickinson as your running mate would be a gamble. The convention may not nominate him for VP until the seventh or eighth ballot, and his selection could alienate moderate supporters, potentially driving New Deal-aligned Republicans to endorse President Garner. However, there is a belief that by campaigning aggressively against the President and the New Deal, you and Dickinson could energize your base enough to offset the loss of moderate support.</p>\", \"candidate_score\": 0.0}}, {\"model\": \"campaign_trail.candidate\", \"pk\": 209, \"fields\": {\"first_name\": \"James A.\", \"last_name\": \"Farley\", \"election\": 20, \"party\": \"Democrat\", \"state\": \"New York\", \"priority\": 9, \"description\": \"'\", \"color_hex\": \"#0000FF\", \"secondary_color_hex\": \"#90C0FF\", \"is_active\": 0, \"image_url\": \"https://i.imgur.com/XaPogOK.png\", \"electoral_victory_message\": \"'\", \"electoral_loss_message\": \"'\", \"no_electoral_majority_message\": \"'\", \"description_as_running_mate\": \"<p>During your presidency, James Farley has served as Chair of the DNC and Postmaster General, and previously led the New York DNC for 15 years. More importantly, he has been a close advisor, essential in implementing and formulating domestic policy. Farley was a political ally and friend of Franklin Roosevelt, managing his gubernatorial campaigns and helping craft the early stages of the ‘New Deal’ before the President-elect's tragic assassination.</p><p> Farley would be a safe choice for running mate and is likely to be nominated on the first ballot, if not by acclamation. While he may not significantly elevate the ticket, he would contribute regional balance, Catholic support, and party unity. It's also rumored that he harbors presidential ambitions for 1940, regardless of your selection. </p>\", \"candidate_score\": 0.0}}, {\"model\": \"campaign_trail.candidate\", \"pk\": 210, \"fields\": {\"first_name\": \"Don’t\", \"last_name\": \"Select\", \"election\": 20, \"party\": \"Democrat\", \"state\": \"Virginia\", \"priority\": 10, \"description\": \"'\", \"color_hex\": \"#0000FF\", \"secondary_color_hex\": \"#90C0FF\", \"is_active\": 0, \"image_url\": \"/static/images/bernie-sanders-2016.jpg\", \"electoral_victory_message\": \"'\", \"electoral_loss_message\": \"'\", \"no_electoral_majority_message\": \"'\", \"description_as_running_mate\": \"<p>Don’t pick this one, idk how to disable these.</p>\", \"candidate_score\": 0.0}}, {\"model\": \"campaign_trail.candidate\", \"pk\": 211, \"fields\": {\"first_name\": \"Paul V.\", \"last_name\": \"McNutt\", \"election\": 20, \"party\": \"Democrat\", \"state\": \"Indiana\", \"priority\": 11, \"description\": \"'\", \"color_hex\": \"#0000FF\", \"secondary_color_hex\": \"#90C0FF\", \"is_active\": 0, \"image_url\": \"https://i.imgur.com/h8ZOSt4.png\", \"electoral_victory_message\": \"'\", \"electoral_loss_message\": \"'\", \"no_electoral_majority_message\": \"'\", \"description_as_running_mate\": \"<p>Paul Voires McNutt, the incumbent Governor of Indiana, elected in 1932, and now Chair of the National Governors Association, is something of a rising star within the party. Known for his relative youth (45), and his platinum hair, the Governor has been a political ally of yours in Indiana, pushing the State to the new federal welfare programs of the New Deal. He is regarded as a forceful New Dealer amongst those in your party, but critics have pointed to at times his ‘authoritarian tendencies’, such as his reorganization of the State’s government giving increase in the Governor and Lt. Governor's power, and creating something of a patronage system with his legislation.</p><p>McNutt would likely be nominated quickly, but some more ardent allies of the deceased President-elect might protest, considering the two’s icy relationship at the 1932 convention. The Senator would certainly help the ticket in Indiana, and the greater Midwest, but wouldn’t do much to excite the party, particularly on the East Coast.</p>\", \"candidate_score\": 0.0}}, {\"model\": \"campaign_trail.candidate\", \"pk\": 213, \"fields\": {\"first_name\": \"Henry A.\", \"last_name\": \"Wallace\", \"election\": 20, \"party\": \"Democrat\", \"state\": \"Iowa\", \"priority\": 13, \"description\": \"'\", \"color_hex\": \"#0000FF\", \"secondary_color_hex\": \"#90C0FF\", \"is_active\": 0, \"image_url\": \"https://i.imgur.com/7axdr8b.png\", \"electoral_victory_message\": \"'\", \"electoral_loss_message\": \"'\", \"no_electoral_majority_message\": \"'\", \"description_as_running_mate\": \"<p>Henry Agard Wallace is the current Secretary of Agriculture. He was of course, a political ally of President-elect Roosevelt, who campaigned for your ticket intently in the 1932 election. Wallace is widely considered the most left-wing member of your cabinet, and there was even some shock amongst some advisors, and conservative allies that you decided to appoint him, as something of an olive branch, but nonetheless.</p><p>Secretary Wallace is likely to be nominated without much fuss at the convention, though it might take a few ballots, he would certainly help in Iowa, amongst farmers broadly, and with the more ardent members of the New Deal coalition. At the same time, his selection could cause alienation, or more likely demotivation of the more conservative elements in your coalition.</p>\", \"candidate_score\": 0.0}}, {\"model\": \"campaign_trail.candidate\", \"pk\": 24, \"fields\": {\"first_name\": \"Don’t\", \"last_name\": \"Select\", \"election\": 20, \"party\": \"Democrat\", \"state\": \"Ohio\", \"priority\": 15, \"description\": \"'\", \"color_hex\": \"#0000FF\", \"secondary_color_hex\": \"#90C0FF\", \"is_active\": 0, \"image_url\": \"/static/images/sherrod-brown-2016.jpg\", \"electoral_victory_message\": \"'\", \"electoral_loss_message\": \"'\", \"no_electoral_majority_message\": \"'\", \"description_as_running_mate\": \"<p>Don’t pick this one, idk how to disable these.</p>\", \"candidate_score\": 0.0}}, {\"model\": \"campaign_trail.candidate\", \"pk\": 23, \"fields\": {\"first_name\": \"Don’t\", \"last_name\": \"Select\", \"election\": 20, \"party\": \"Democrat\", \"state\": \"Tennessee\", \"priority\": -1, \"description\": \"'\", \"color_hex\": \"#0000FF\", \"secondary_color_hex\": \"#90C0FF\", \"is_active\": 0, \"image_url\": \"/static/images/sherrod-brown-2016.jpg\", \"electoral_victory_message\": \"'\", \"electoral_loss_message\": \"'\", \"no_electoral_majority_message\": \"'\", \"description_as_running_mate\": \"<p>Don’t pick this one, idk how to disable these.</p>\", \"candidate_score\": 0.0}}, {\"model\": \"campaign_trail.candidate\", \"pk\": 214, \"fields\": {\"first_name\": \"James\", \"last_name\": \"Maurer\", \"election\": 20, \"party\": \"Socialist\", \"state\": \"Pennsylvania\", \"priority\": 14, \"description\": \"'\", \"color_hex\": \"#00C100\", \"secondary_color_hex\": \"#A1FFA1\", \"is_active\": 0, \"image_url\": \"'\", \"electoral_victory_message\": \"'\", \"electoral_loss_message\": \"'\", \"no_electoral_majority_message\": \"'\", \"description_as_running_mate\": \"'\", \"candidate_score\": 0.0}}, {\"model\": \"campaign_trail.candidate\", \"pk\": 215, \"fields\": {\"first_name\": \"Other\", \"last_name\": \"Running Mates\", \"election\": 20, \"party\": \"Independent\", \"state\": \"Illinois\", \"priority\": 15, \"description\": \"'\", \"color_hex\": \"#FFFF00\", \"secondary_color_hex\": \"#FFFFC0\", \"is_active\": 0, \"image_url\": \"'\", \"electoral_victory_message\": \"'\", \"electoral_loss_message\": \"'\", \"no_electoral_majority_message\": \"'\", \"description_as_running_mate\": \"'\", \"candidate_score\": 0.0}}]");
+campaignTrail_temp.election_json = JSON.parse("[{\"model\": \"campaign_trail.election\", \"pk\": 20, \"fields\": {\"year\": 1936, \"summary\": \"</p><p>After the assassination of Franklin D. Roosevelt, John Nance Garner assumed the presidency and has since overseen the implementation of key New Deal policies, including the WPA and Social Security. Though tensions persist with organized labor and the liberal wing of his party, Garner remains broadly popular and is favored to win re-election.</p><p>On the Republican side, Frank Knox, a newspaper publisher and veteran, emerged as the nominee after the ''Stop-Landon'' movement gained traction. Knox has positioned himself as a fresh alternative, criticizing Garner's handling of the economy and promoting his blend of business pragmatism and conservative principles. Though the underdog, he’s expected to run a hard-fought campaign.<p>\", \"image_url\": \"https://i.imgur.com/aQqb4aA.png\", \"winning_electoral_vote_number\": 266, \"advisor_url\": \"https://i.imgur.com/TowjPjw.png\", \"recommended_reading\": \"<h4 style=\\\"margin-top: 0.5em;\\\">Articles</h4>Wikipedia coming in clutch, as per usual - <a href=\\\"https://en.wikipedia.org/wiki/1936_United_States_presidential_election\\\" target=\\\"_blank\\\"> 1936 United States presidential election</a>\", \"has_visits\": 1, \"no_electoral_majority_image\": \"https://i.imgur.com/BboBj0T.png\"}}]");
+campaignTrail_temp.opponents_default_json = JSON.parse("[{\"election\": 20, \"candidates\": [201, 202, 203, 200]}]");
+campaignTrail_temp.temp_election_list = [{"id": 20, "year": 1936, "is_premium": 0, "display_year": "1936Steel"}];
+campaignTrail_temp.running_mate_json = JSON.parse("[{\"model\": \"campaign_trail.running_mate\", \"pk\": 106, \"fields\": {\"candidate\": 155, \"running_mate\": 164}}, {\"model\": \"campaign_trail.running_mate\", \"pk\": 76, \"fields\": {\"candidate\": 116, \"running_mate\": 120}}, {\"model\": \"campaign_trail.running_mate\", \"pk\": 67, \"fields\": {\"candidate\": 94, \"running_mate\": 104}}, {\"model\": \"campaign_trail.running_mate\", \"pk\": 74, \"fields\": {\"candidate\": 107, \"running_mate\": 114}}, {\"model\": \"campaign_trail.running_mate\", \"pk\": 66, \"fields\": {\"candidate\": 93, \"running_mate\": 103}}, {\"model\": \"campaign_trail.running_mate\", \"pk\": 81, \"fields\": {\"candidate\": 118, \"running_mate\": 125}}, {\"model\": \"campaign_trail.running_mate\", \"pk\": 7, \"fields\": {\"candidate\": 18, \"running_mate\": 38}}, {\"model\": \"campaign_trail.running_mate\", \"pk\": 8, \"fields\": {\"candidate\": 19, \"running_mate\": 39}}, {\"model\": \"campaign_trail.running_mate\", \"pk\": 82, \"fields\": {\"candidate\": 119, \"running_mate\": 126}}, {\"model\": \"campaign_trail.running_mate\", \"pk\": 116, \"fields\": {\"candidate\": 168, \"running_mate\": 178}}, {\"model\": \"campaign_trail.running_mate\", \"pk\": 161, \"fields\": {\"candidate\": 203, \"running_mate\": 215}}, {\"model\": \"campaign_trail.running_mate\", \"pk\": 57, \"fields\": {\"candidate\": 80, \"running_mate\": 90}}, {\"model\": \"campaign_trail.running_mate\", \"pk\": 56, \"fields\": {\"candidate\": 79, \"running_mate\": 89}}, {\"model\": \"campaign_trail.running_mate\", \"pk\": 160, \"fields\": {\"candidate\": 202, \"running_mate\": 214}}, {\"model\": \"campaign_trail.running_mate\", \"pk\": 115, \"fields\": {\"candidate\": 167, \"running_mate\": 177}}, {\"model\": \"campaign_trail.running_mate\", \"pk\": 46, \"fields\": {\"candidate\": 69, \"running_mate\": 73}}, {\"model\": \"campaign_trail.running_mate\", \"pk\": 47, \"fields\": {\"candidate\": 70, \"running_mate\": 76}}, {\"model\": \"campaign_trail.running_mate\", \"pk\": 96, \"fields\": {\"candidate\": 144, \"running_mate\": 150}}, {\"model\": \"campaign_trail.running_mate\", \"pk\": 97, \"fields\": {\"candidate\": 145, \"running_mate\": 151}}, {\"model\": \"campaign_trail.running_mate\", \"pk\": 105, \"fields\": {\"candidate\": 154, \"running_mate\": 163}}, {\"model\": \"campaign_trail.running_mate\", \"pk\": 1, \"fields\": {\"candidate\": 16, \"running_mate\": 30}}, {\"model\": \"campaign_trail.running_mate\", \"pk\": 87, \"fields\": {\"candidate\": 131, \"running_mate\": 135}}, {\"model\": \"campaign_trail.running_mate\", \"pk\": 94, \"fields\": {\"candidate\": 143, \"running_mate\": 148}}, {\"model\": \"campaign_trail.running_mate\", \"pk\": 89, \"fields\": {\"candidate\": 132, \"running_mate\": 137}}, {\"model\": \"campaign_trail.running_mate\", \"pk\": 3, \"fields\": {\"candidate\": 17, \"running_mate\": 31}}, {\"model\": \"campaign_trail.running_mate\", \"pk\": 155, \"fields\": {\"candidate\": 201, \"running_mate\": 209}}, {\"model\": \"campaign_trail.running_mate\", \"pk\": 92, \"fields\": {\"candidate\": 142, \"running_mate\": 146}}, {\"model\": \"campaign_trail.running_mate\", \"pk\": 41, \"fields\": {\"candidate\": 25, \"running_mate\": 62}}, {\"model\": \"campaign_trail.running_mate\", \"pk\": 22, \"fields\": {\"candidate\": 20, \"running_mate\": 45}}, {\"model\": \"campaign_trail.running_mate\", \"pk\": 48, \"fields\": {\"candidate\": 77, \"running_mate\": 81}}, {\"model\": \"campaign_trail.running_mate\", \"pk\": 26, \"fields\": {\"candidate\": 21, \"running_mate\": 49}}, {\"model\": \"campaign_trail.running_mate\", \"pk\": 77, \"fields\": {\"candidate\": 117, \"running_mate\": 121}}, {\"model\": \"campaign_trail.running_mate\", \"pk\": 68, \"fields\": {\"candidate\": 105, \"running_mate\": 108}}, {\"model\": \"campaign_trail.running_mate\", \"pk\": 37, \"fields\": {\"candidate\": 24, \"running_mate\": 58}}, {\"model\": \"campaign_trail.running_mate\", \"pk\": 150, \"fields\": {\"candidate\": 200, \"running_mate\": 204}}, {\"model\": \"campaign_trail.running_mate\", \"pk\": 33, \"fields\": {\"candidate\": 23, \"running_mate\": 55}}, {\"model\": \"campaign_trail.running_mate\", \"pk\": 52, \"fields\": {\"candidate\": 78, \"running_mate\": 85}}, {\"model\": \"campaign_trail.running_mate\", \"pk\": 101, \"fields\": {\"candidate\": 153, \"running_mate\": 159}}, {\"model\": \"campaign_trail.running_mate\", \"pk\": 44, \"fields\": {\"candidate\": 67, \"running_mate\": 71}}, {\"model\": \"campaign_trail.running_mate\", \"pk\": 62, \"fields\": {\"candidate\": 92, \"running_mate\": 99}}, {\"model\": \"campaign_trail.running_mate\", \"pk\": 71, \"fields\": {\"candidate\": 106, \"running_mate\": 111}}, {\"model\": \"campaign_trail.running_mate\", \"pk\": 18, \"fields\": {\"candidate\": 36, \"running_mate\": 18}}, {\"model\": \"campaign_trail.running_mate\", \"pk\": 45, \"fields\": {\"candidate\": 68, \"running_mate\": 72}}, {\"model\": \"campaign_trail.running_mate\", \"pk\": 98, \"fields\": {\"candidate\": 152, \"running_mate\": 156}}, {\"model\": \"campaign_trail.running_mate\", \"pk\": 13, \"fields\": {\"candidate\": 29, \"running_mate\": 27}}, {\"model\": \"campaign_trail.running_mate\", \"pk\": 12, \"fields\": {\"candidate\": 27, \"running_mate\": 29}}, {\"model\": \"campaign_trail.running_mate\", \"pk\": 58, \"fields\": {\"candidate\": 91, \"running_mate\": 95}}, {\"model\": \"campaign_trail.running_mate\", \"pk\": 99, \"fields\": {\"candidate\": 152, \"running_mate\": 157}}, {\"model\": \"campaign_trail.running_mate\", \"pk\": 63, \"fields\": {\"candidate\": 92, \"running_mate\": 100}}, {\"model\": \"campaign_trail.running_mate\", \"pk\": 107, \"fields\": {\"candidate\": 165, \"running_mate\": 169}}, {\"model\": \"campaign_trail.running_mate\", \"pk\": 111, \"fields\": {\"candidate\": 166, \"running_mate\": 173}}, {\"model\": \"campaign_trail.running_mate\", \"pk\": 85, \"fields\": {\"candidate\": 68, \"running_mate\": 129}}, {\"model\": \"campaign_trail.running_mate\", \"pk\": 83, \"fields\": {\"candidate\": 67, \"running_mate\": 127}}, {\"model\": \"campaign_trail.running_mate\", \"pk\": 108, \"fields\": {\"candidate\": 165, \"running_mate\": 170}}, {\"model\": \"campaign_trail.running_mate\", \"pk\": 59, \"fields\": {\"candidate\": 91, \"running_mate\": 96}}, {\"model\": \"campaign_trail.running_mate\", \"pk\": 15, \"fields\": {\"candidate\": 29, \"running_mate\": 40}}, {\"model\": \"campaign_trail.running_mate\", \"pk\": 113, \"fields\": {\"candidate\": 166, \"running_mate\": 175}}, {\"model\": \"campaign_trail.running_mate\", \"pk\": 112, \"fields\": {\"candidate\": 166, \"running_mate\": 174}}, {\"model\": \"campaign_trail.running_mate\", \"pk\": 60, \"fields\": {\"candidate\": 91, \"running_mate\": 97}}, {\"model\": \"campaign_trail.running_mate\", \"pk\": 109, \"fields\": {\"candidate\": 165, \"running_mate\": 171}}, {\"model\": \"campaign_trail.running_mate\", \"pk\": 73, \"fields\": {\"candidate\": 106, \"running_mate\": 113}}, {\"model\": \"campaign_trail.running_mate\", \"pk\": 34, \"fields\": {\"candidate\": 23, \"running_mate\": 44}}, {\"model\": \"campaign_trail.running_mate\", \"pk\": 9, \"fields\": {\"candidate\": 27, \"running_mate\": 33}}, {\"model\": \"campaign_trail.running_mate\", \"pk\": 10, \"fields\": {\"candidate\": 27, \"running_mate\": 40}}, {\"model\": \"campaign_trail.running_mate\", \"pk\": 53, \"fields\": {\"candidate\": 78, \"running_mate\": 86}}, {\"model\": \"campaign_trail.running_mate\", \"pk\": 69, \"fields\": {\"candidate\": 105, \"running_mate\": 109}}, {\"model\": \"campaign_trail.running_mate\", \"pk\": 102, \"fields\": {\"candidate\": 153, \"running_mate\": 160}}, {\"model\": \"campaign_trail.running_mate\", \"pk\": 110, \"fields\": {\"candidate\": 165, \"running_mate\": 172}}, {\"model\": \"campaign_trail.running_mate\", \"pk\": 20, \"fields\": {\"candidate\": 36, \"running_mate\": 42}}, {\"model\": \"campaign_trail.running_mate\", \"pk\": 19, \"fields\": {\"candidate\": 36, \"running_mate\": 41}}, {\"model\": \"campaign_trail.running_mate\", \"pk\": 49, \"fields\": {\"candidate\": 77, \"running_mate\": 82}}, {\"model\": \"campaign_trail.running_mate\", \"pk\": 16, \"fields\": {\"candidate\": 29, \"running_mate\": 33}}, {\"model\": \"campaign_trail.running_mate\", \"pk\": 93, \"fields\": {\"candidate\": 142, \"running_mate\": 147}}, {\"model\": \"campaign_trail.running_mate\", \"pk\": 103, \"fields\": {\"candidate\": 153, \"running_mate\": 161}}, {\"model\": \"campaign_trail.running_mate\", \"pk\": 72, \"fields\": {\"candidate\": 106, \"running_mate\": 112}}, {\"model\": \"campaign_trail.running_mate\", \"pk\": 151, \"fields\": {\"candidate\": 200, \"running_mate\": 205}}, {\"model\": \"campaign_trail.running_mate\", \"pk\": 54, \"fields\": {\"candidate\": 78, \"running_mate\": 87}}, {\"model\": \"campaign_trail.running_mate\", \"pk\": 55, \"fields\": {\"candidate\": 78, \"running_mate\": 88}}, {\"model\": \"campaign_trail.running_mate\", \"pk\": 86, \"fields\": {\"candidate\": 68, \"running_mate\": 130}}, {\"model\": \"campaign_trail.running_mate\", \"pk\": 78, \"fields\": {\"candidate\": 117, \"running_mate\": 122}}, {\"model\": \"campaign_trail.running_mate\", \"pk\": 61, \"fields\": {\"candidate\": 91, \"running_mate\": 98}}, {\"model\": \"campaign_trail.running_mate\", \"pk\": 84, \"fields\": {\"candidate\": 67, \"running_mate\": 128}}, {\"model\": \"campaign_trail.running_mate\", \"pk\": 43, \"fields\": {\"candidate\": 25, \"running_mate\": 64}}, {\"model\": \"campaign_trail.running_mate\", \"pk\": 42, \"fields\": {\"candidate\": 25, \"running_mate\": 63}}, {\"model\": \"campaign_trail.running_mate\", \"pk\": 40, \"fields\": {\"candidate\": 24, \"running_mate\": 61}}, {\"model\": \"campaign_trail.running_mate\", \"pk\": 39, \"fields\": {\"candidate\": 24, \"running_mate\": 60}}, {\"model\": \"campaign_trail.running_mate\", \"pk\": 38, \"fields\": {\"candidate\": 24, \"running_mate\": 59}}, {\"model\": \"campaign_trail.running_mate\", \"pk\": 95, \"fields\": {\"candidate\": 143, \"running_mate\": 149}}, {\"model\": \"campaign_trail.running_mate\", \"pk\": 100, \"fields\": {\"candidate\": 152, \"running_mate\": 158}}, {\"model\": \"campaign_trail.running_mate\", \"pk\": 30, \"fields\": {\"candidate\": 21, \"running_mate\": 51}}, {\"model\": \"campaign_trail.running_mate\", \"pk\": 28, \"fields\": {\"candidate\": 21, \"running_mate\": 50}}, {\"model\": \"campaign_trail.running_mate\", \"pk\": 24, \"fields\": {\"candidate\": 20, \"running_mate\": 47}}, {\"model\": \"campaign_trail.running_mate\", \"pk\": 17, \"fields\": {\"candidate\": 29, \"running_mate\": 31}}, {\"model\": \"campaign_trail.running_mate\", \"pk\": 11, \"fields\": {\"candidate\": 27, \"running_mate\": 31}}, {\"model\": \"campaign_trail.running_mate\", \"pk\": 79, \"fields\": {\"candidate\": 117, \"running_mate\": 123}}, {\"model\": \"campaign_trail.running_mate\", \"pk\": 80, \"fields\": {\"candidate\": 117, \"running_mate\": 124}}, {\"model\": \"campaign_trail.running_mate\", \"pk\": 90, \"fields\": {\"candidate\": 132, \"running_mate\": 138}}, {\"model\": \"campaign_trail.running_mate\", \"pk\": 4, \"fields\": {\"candidate\": 17, \"running_mate\": 32}}, {\"model\": \"campaign_trail.running_mate\", \"pk\": 153, \"fields\": {\"candidate\": 200, \"running_mate\": 207}}, {\"model\": \"campaign_trail.running_mate\", \"pk\": 104, \"fields\": {\"candidate\": 153, \"running_mate\": 162}}, {\"model\": \"campaign_trail.running_mate\", \"pk\": 157, \"fields\": {\"candidate\": 201, \"running_mate\": 211}}, {\"model\": \"campaign_trail.running_mate\", \"pk\": 25, \"fields\": {\"candidate\": 20, \"running_mate\": 48}}, {\"model\": \"campaign_trail.running_mate\", \"pk\": 88, \"fields\": {\"candidate\": 131, \"running_mate\": 136}}, {\"model\": \"campaign_trail.running_mate\", \"pk\": 70, \"fields\": {\"candidate\": 105, \"running_mate\": 110}}, {\"model\": \"campaign_trail.running_mate\", \"pk\": 2, \"fields\": {\"candidate\": 16, \"running_mate\": 34}}, {\"model\": \"campaign_trail.running_mate\", \"pk\": 35, \"fields\": {\"candidate\": 23, \"running_mate\": 56}}, {\"model\": \"campaign_trail.running_mate\", \"pk\": 64, \"fields\": {\"candidate\": 92, \"running_mate\": 101}}, {\"model\": \"campaign_trail.running_mate\", \"pk\": 36, \"fields\": {\"candidate\": 23, \"running_mate\": 57}}, {\"model\": \"campaign_trail.running_mate\", \"pk\": 5, \"fields\": {\"candidate\": 17, \"running_mate\": 33}}, {\"model\": \"campaign_trail.running_mate\", \"pk\": 6, \"fields\": {\"candidate\": 17, \"running_mate\": 37}}, {\"model\": \"campaign_trail.running_mate\", \"pk\": 23, \"fields\": {\"candidate\": 20, \"running_mate\": 46}}, {\"model\": \"campaign_trail.running_mate\", \"pk\": 21, \"fields\": {\"candidate\": 36, \"running_mate\": 43}}, {\"model\": \"campaign_trail.running_mate\", \"pk\": 50, \"fields\": {\"candidate\": 77, \"running_mate\": 83}}, {\"model\": \"campaign_trail.running_mate\", \"pk\": 91, \"fields\": {\"candidate\": 132, \"running_mate\": 139}}, {\"model\": \"campaign_trail.running_mate\", \"pk\": 32, \"fields\": {\"candidate\": 21, \"running_mate\": 53}}, {\"model\": \"campaign_trail.running_mate\", \"pk\": 31, \"fields\": {\"candidate\": 21, \"running_mate\": 52}}, {\"model\": \"campaign_trail.running_mate\", \"pk\": 156, \"fields\": {\"candidate\": 201, \"running_mate\": 213}}, {\"model\": \"campaign_trail.running_mate\", \"pk\": 75, \"fields\": {\"candidate\": 106, \"running_mate\": 115}}, {\"model\": \"campaign_trail.running_mate\", \"pk\": 65, \"fields\": {\"candidate\": 92, \"running_mate\": 102}}, {\"model\": \"campaign_trail.running_mate\", \"pk\": 51, \"fields\": {\"candidate\": 77, \"running_mate\": 84}}]");
+campaignTrail_temp.credits = '.theanswerisme';
